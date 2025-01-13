@@ -1,0 +1,20 @@
+# Official Python image from Docker Hub
+FROM python:3.12-slim
+
+# Set the working directory in the container
+WORKDIR /app
+
+# Copy current dir contents to container at /app
+COPY . /app
+
+# Install dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Expose port 5000 (default Flask port)
+EXPOSE 5000
+
+# Set environment variables for Flask
+ENV FLASK_APP = app.py
+ENV FLASK_RUN_HOST = 0.0.0.0
+
+CMD ["flask", "run"]
