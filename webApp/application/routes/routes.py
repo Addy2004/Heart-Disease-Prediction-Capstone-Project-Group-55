@@ -1,4 +1,4 @@
-from app.utils import predictionsJSONResponse, validateInput, logger
+from application.utils import predictionsJSONResponse, validateInput, logger
 from flask import Blueprint, request, jsonify
 import logging
 import traceback
