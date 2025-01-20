@@ -24,7 +24,7 @@ jobs:
           cd webApp
           docker build -t ${{ secrets.DOCKER_USERNAME }}/flask-app-demo:latest .
 
-      - name: Push Docker image to Docket Hub
+      - name: Push Docker image to Docker Hub
         run: |
           cd webApp
           docker push ${{ secrets.DOCKER_USERNAME }}/flask-app-demo:latest
@@ -38,6 +38,6 @@ jobs:
 
       - name: Deploy to Elastic Beanstalk
         run: |
-          eb init -p docker flask-app-demp --region ap-south-1
+          eb init -p docker flask-app-demo --region ap-south-1
           eb use flask-app-demo-env # Elastic Beanstalk environment name
           eb deploy
