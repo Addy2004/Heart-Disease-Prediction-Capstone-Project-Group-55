@@ -42,14 +42,17 @@ jobs:
           sudo apt-get install -y python3-pip
           pip3 install awsebcli --upgrade --user
           
-      - name: Initialize Elastic Beanstalk Application
+      - name: Terminate Elastic Beanstalk Environment (if exists)
         run: |
-          eb init -p docker flask-app-demo --region ap-south-1
+          eb use flask-app-demo-env || echo "Environment not found, skipping termination"
+          eb terminate flask-app-demo-env --force || echo "Environment already terminated or doesn't exist"
 
-      - name: Use Existing Elastic Beanstalk Environment
+      - name: Create New Elastic Beanstalk Environment using Launch Template
         run: |
-          eb use flask-app-demo-env 
+          eb create flask-app-demo-env --region ap-south-1 --launch-template LaunchTemplateName=flask-launch-template --no-verify --single
 
-      - name: Deploy to Elastic Beanstalk
+      - name: Deploy Docker Image to Elastic Beanstalk
         run: |
-          eb deploy
+          eb setenv DOCKER_IMAGE=${{ secrets.DOCKER_USERNAME }}/flask-app-demo:latest
+          eb use flask-app-demo-env
+          eb deploy --no-verify
