@@ -21,6 +21,9 @@ jobs:
 
       - name: Navigate to webApp directory
         run: cd webApp
+
+      - name: show present working directory
+        run: pwd
       
       - name: Build Docker image
         run: |
