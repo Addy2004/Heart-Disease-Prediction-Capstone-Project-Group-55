@@ -18,25 +18,15 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-          
-      - name: list
-        run: ls
-        
-      - name: Navigate to webApp directory
-        run: cd webApp/
-
-      - name: show present working directory
-        run: pwd
-
-      - name: list
-        run: ls
       
       - name: Build Docker image
         run: |
+          cd webApp
           docker build -t ${{ secrets.DOCKER_USERNAME }}/flask-app-demo:latest .
 
       - name: Push Docker image to Docket Hub
         run: |
+          cd webApp
           docker push ${{ secrets.DOCKER_USERNAME }}/flask-app-demo:latest
 
       - name: Set up AWS CLI
