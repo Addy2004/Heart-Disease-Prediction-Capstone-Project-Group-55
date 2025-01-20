@@ -24,6 +24,9 @@ jobs:
 
       - name: show present working directory
         run: pwd
+
+      - name: list
+        run: ls
       
       - name: Build Docker image
         run: |
