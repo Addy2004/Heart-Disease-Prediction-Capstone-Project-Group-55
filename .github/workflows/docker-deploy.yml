@@ -18,9 +18,12 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-
+          
+      - name: list
+        run: ls
+        
       - name: Navigate to webApp directory
-        run: cd webApp
+        run: cd webApp/
 
       - name: show present working directory
         run: pwd
