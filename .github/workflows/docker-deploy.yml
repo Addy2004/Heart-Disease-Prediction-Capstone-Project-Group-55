@@ -36,6 +36,12 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }} # AWS Secret Key
           aws-region: ap-south-1 # AWS Region, adjust as necessary
 
+      - name: Install Elastic Beanstalk CLI
+        run: |
+          curl -sL https://github.com/aws/aws-elastic-beanstalk-cli-setup/raw/master/scripts/install_dependencies | sudo bash
+          sudo apt-get install -y python3-pip
+          pip3 install awsebcli --upgrade --user
+          
       - name: Deploy to Elastic Beanstalk
         run: |
           eb init -p docker flask-app-demo --region ap-south-1
