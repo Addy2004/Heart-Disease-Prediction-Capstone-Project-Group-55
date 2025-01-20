@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Capstone</title>
+</head>
+<body>
+    <h1>Heart Disease Prediction</h1>
+    <form id="predictForm">
+        <label for="age">Age:</label>
+        <input type="number" id="age" required>
+        <br><br>
+
+        <label>Sex:</label>
+        <input type="radio" id="male" name="sex" value="M" required>Male
+        <input type="radio" id="female" name="sex" value="F" required>Female
+        <br><br>
+
+        <label for="chestPain">Chest Pain Type:</label>
+        <select id="chestPain">
+            <option value="TA">TA</option>
+            <option value="ATA">ATA</option>
+            <option value="NAP">NAP</option>
+            <option value="ASY">ASY</option>
+        </select>
+        <br><br>
+
+        <label for="restingBP">Resting BP:</label>
+        <input type="number" id="restingBP" required>
+        <br><br>
+
+        <label for="cholesterol">Cholesterol:</label>
+        <input type="number" id="cholesterol" required>
+        <br><br>
+
+        <label for="fastingBS">Fasting BS:</label>
+        <input type="number" id="fastingBS" required>
+        <br><br>
+
+        <label for="restingECG">Resting ECG:</label>
+        <select id="restingECG">
+            <option value="Normal">Normal</option>
+            <option value="ST">ST</option>
+            <option value="LVH">LVH</option>
+        </select>
+        <br><br>
+
+        <label for="maxHR">Max HR:</label>
+        <input type="number" id="maxHR" required>
+        <br><br>
+
+        <label>Exercise Angina</label>
+        <input type="radio" id="exerciseYes" name="exerciseAngina" value="Y" required> Yes
+        <input type="radio" id="exerciseNo" name="exerciseAngina" value="N"> No
+        <br><br>
+
+        <label for="oldpeak">Oldpeak:</label>
+        <input type="number" id="oldpeak" step="0.1" required>
+        <br><br>
+
+        <label for="stSlope">ST Slope:</label>
+        <select id="stSlope">
+            <option value="Up">Up</option>
+            <option value="Flat">Flat</option>
+            <option value="Down">Down</option>
+        </select>
+        <br><br>
+
+        <button type="submit">Submit</button>
+    </form>
+
+    <h2>Prediction Results</h2>
+    <div id="result"></div>
+
+    <script>
+        async function submitForm(event) {
+            event.preventDefault();
+            const formData = {
+                Age: parseInt(document.getElementById('age').value),
+                Sex: document.querySelector('input[name="sex"]:checked').value,
+                ChestPainType: document.getElementById('chestPain').value,
+                RestingBP: parseInt(document.getElementById('restingBP').value),
+                Cholesterol: parseInt(document.getElementById('cholesterol').value),
+                FastingBS: parseInt(document.getElementById('fastingBS').value),
+                RestingECG: document.getElementById('restingECG').value,
+                MaxHR: parseInt(document.getElementById('maxHR').value),
+                ExerciseAngina: document.querySelector('input[name="exerciseAngina"]:checked').value,
+                Oldpeak: parseFloat(document.getElementById('oldpeak').value),
+                ST_Slope: document.getElementById('stSlope').value
+            };
+
+            try{
+                const response = await fetch('http://127.0.0.1:5000/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                if(!response.ok){
+                    throw new Error(`Error: ${response.statusText}`);
+                } 
+                
+                const jsonResponse = await response.json();
+                console.log(jsonResponse);
+
+                displayResponse(jsonResponse);
+            } catch(error){
+                console.error('Error occured: ', error);
+                document.getElementById('result').innerHTML = `<p style="color:red;">${error.message}</p>`;
+            }
+        }
+
+        function displayResponse(response) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = ''; // Clear previous results
+
+            // Recursive function to render nested objects
+            function renderObject(obj, container) {
+                const ul = document.createElement('ul'); // Create an unordered list
+                for (const key in obj) {
+                    const li = document.createElement('li'); // Create a list item
+                    if (Array.isArray(obj[key])) {
+                        // Special handling for arrays (like probabilities)
+                        li.innerHTML = `<strong>${key}:</strong> ${obj[key].join(', ')}`;
+                    } else if (typeof obj[key] === 'object' && obj[key] !== null) {
+                        // Recursive call for nested objects
+                        li.innerHTML = `<strong>${key}:</strong>`;
+                        renderObject(obj[key], li);
+                    } else {
+                        // Render primitive values
+                        li.innerHTML = `<strong>${key}:</strong> ${obj[key]}`;
+                    }
+                    ul.appendChild(li); // Append the list item to the unordered list
+                }
+                container.appendChild(ul); // Append the list to the container
+            }
+
+            renderObject(response.models, resultDiv); // Start rendering from the `models` key
+        }
+
+        // Attach event listener to the form
+        document.getElementById('predictForm').addEventListener('submit', submitForm);
+    </script>
+</body>
+</html>
