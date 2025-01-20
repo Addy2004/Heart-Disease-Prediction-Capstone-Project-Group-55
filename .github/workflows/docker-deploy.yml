@@ -46,15 +46,6 @@ jobs:
         run: |
           eb init -p docker flask-app-demo --region ap-south-1
 
-      - name: Configure Docker to Pull Image from Docker Hub
-        run: |
-          echo "version: 1" > Dockerrun.aws.json
-          echo "services:" >> Dockerrun.aws.json
-          echo "  web:" >> Dockerrun.aws.json
-          echo "    image: ${DOCKER_USERNAME}/flask-app-demo:latest" >> Dockerrun.aws.json
-          echo "    ports:" >> Dockerrun.aws.json
-          echo "      - containerPort: 80" >> Dockerrun.aws.json
-
       - name: Use Existing Elastic Beanstalk Environment
         run: |
           eb use flask-app-demo-env 
