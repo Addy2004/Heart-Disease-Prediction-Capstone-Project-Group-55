@@ -46,16 +46,10 @@ jobs:
         run: |
           eb init -p docker flask-app-demo --region ap-south-1
 
-      - name: Check if Elastic Beanstalk Environment exists
+      - name: Use Existing Elastic Beanstalk Environment
         run: |
-          if ! eb list | grep -q "flask-app-demo-env"; then
-            echo "Environment doesn't exist, creating it now."
-            eb create flask-app-demo-env --region ap-south-1 --single
-          else
-            echo "Environment exists, skipping creation."
-          fi
+          eb use flask-app-demo-env 
 
       - name: Deploy to Elastic Beanstalk
         run: |
-          eb use flask-app-demo-env
           eb deploy
