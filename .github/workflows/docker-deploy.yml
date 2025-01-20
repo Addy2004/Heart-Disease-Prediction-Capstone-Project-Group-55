@@ -42,8 +42,20 @@ jobs:
           sudo apt-get install -y python3-pip
           pip3 install awsebcli --upgrade --user
           
-      - name: Deploy to Elastic Beanstalk
+      - name: Initialize Elastic Beanstalk Application
         run: |
           eb init -p docker flask-app-demo --region ap-south-1
-          eb use flask-app-demo-env # Elastic Beanstalk environment name
+
+      - name: Check if Elastic Beanstalk Environment exists
+        run: |
+          if ! eb list | grep -q "flask-app-demo-env"; then
+            echo "Environment doesn't exist, creating it now."
+            eb create flask-app-demo-env --region ap-south-1 --single
+          else
+            echo "Environment exists, skipping creation."
+          fi
+
+      - name: Deploy to Elastic Beanstalk
+        run: |
+          eb use flask-app-demo-env
           eb deploy
