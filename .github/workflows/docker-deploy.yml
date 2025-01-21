@@ -22,12 +22,12 @@ jobs:
       - name: Build Docker image
         run: |
           cd webApp
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/flask-app-demo:latest .
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/flask-app-server:latest .
 
       - name: Push Docker image to Docker Hub
         run: |
           cd webApp
-          docker push ${{ secrets.DOCKER_USERNAME }}/flask-app-demo:latest
+          docker push ${{ secrets.DOCKER_USERNAME }}/flask-app-server:latest
 
       - name: Set up AWS CLI
         uses: aws-actions/configure-aws-credentials@v1
@@ -45,15 +45,15 @@ jobs:
       - name: Initialize Elastic Beanstalk with EB CLI
         run: |
           eb init -p docker --region ap-south-1 --no-verify
-          eb use flask-app-demo-env || echo "Environment doesn't exist, skipping use"
+          eb use flask-app-server-env || echo "Environment doesn't exist, skipping use"
 
       - name: Terminate Existing Elastic Beanstalk Environment
         run: |
-          eb terminate flask-app-demo-env --force --region ap-south-1 || echo "Environment doesn't exist, skipping termination"
+          eb terminate flask-app-server-env --force --region ap-south-1 || echo "Environment doesn't exist, skipping termination"
       
       - name: Wait for Termination to Complete
         run: |
-          while eb list | grep -q flask-app-demo-env; do
+          while eb list | grep -q flask-app-server-env; do
             echo "Waiting for environment to terminate..."
             sleep 10
           done
@@ -61,15 +61,15 @@ jobs:
 
       - name: Create New Elastic Beanstalk Environment with Free Tier Configuration
         run: |
-          eb create flask-app-demo-env \
+          eb create flask-app-server-env \
             --region ap-south-1 \
-            --cname flask-app-demo-env \
+            --cname flask-app-server-env \
             --no-verify \
             --single \
             --instance-type t2.micro \
-            --envvars DOCKER_IMAGE=${{ secrets.DOCKER_USERNAME }}/flask-app-demo:latest
+            --envvars DOCKER_IMAGE=${{ secrets.DOCKER_USERNAME }}/flask-app-server:latest
 
       - name: Deploy Docker Image to Elastic Beanstalk
         run: |
-          eb use flask-app-demo-env
+          eb use flask-app-server-env
           eb deploy --no-verify
