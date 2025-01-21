@@ -3,7 +3,7 @@ name: Docker Build and Deploy to AWS Elastic Beanstalk
 on:
   push:
     branches:
-      - main # Trigger on pushes to the main branch (or any branch you prefer)
+      - main # Trigger on pushes to the main branch
 
 jobs:
   build_and_deploy:
@@ -41,11 +41,11 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y python3-pip
           pip3 install awsebcli --upgrade --user
-          
+
       - name: Terminate Existing Elastic Beanstalk Environment
         run: |
           eb terminate flask-app-demo-env --force --region ap-south-1 || echo "Environment doesn't exist, skipping termination"
-        
+      
       - name: Wait for Termination to Complete
         run: |
           while eb list | grep -q flask-app-demo-env; do
@@ -53,18 +53,17 @@ jobs:
             sleep 10
           done
           echo "Environment terminated successfully."
-  
-      - name: Create New Elastic Beanstalk Environment with Launch Template
+
+      - name: Create New Elastic Beanstalk Environment with Free Tier Configuration
         run: |
           eb create flask-app-demo-env \
             --region ap-south-1 \
-            --launch-template LaunchTemplateName=flask-launch-template \
             --cname flask-app-demo-env \
             --no-verify \
             --single \
             --instance-type t2.micro \
-            --env-vars DOCKER_IMAGE=${{ secrets.DOCKER_USERNAME }}/flask-app-demo:latest
-  
+            --envvars DOCKER_IMAGE=${{ secrets.DOCKER_USERNAME }}/flask-app-demo:latest
+
       - name: Deploy Docker Image to Elastic Beanstalk
         run: |
           eb use flask-app-demo-env
