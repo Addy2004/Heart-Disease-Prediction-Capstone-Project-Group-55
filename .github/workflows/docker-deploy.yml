@@ -42,6 +42,11 @@ jobs:
           sudo apt-get install -y python3-pip
           pip3 install awsebcli --upgrade --user
 
+      - name: Initialize Elastic Beanstalk with EB CLI
+        run: |
+          eb init -p python-3 --region ap-south-1 --no-verify
+          eb use flask-app-demo-env || echo "Environment doesn't exist, skipping use"
+
       - name: Terminate Existing Elastic Beanstalk Environment
         run: |
           eb terminate flask-app-demo-env --force --region ap-south-1 || echo "Environment doesn't exist, skipping termination"
