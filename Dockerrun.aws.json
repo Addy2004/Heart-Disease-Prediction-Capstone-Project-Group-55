@@ -1,7 +1,7 @@
 {
     "AWSEBDockerrunVersion": "1",
     "Image": {
-      "Name": "addy2004/flask-app-demo:latest",
+      "Name": "addy2004/flask-app-server:latest",
       "Update": "true"
     },
     "Ports": [
