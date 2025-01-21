@@ -44,7 +44,7 @@ jobs:
 
       - name: Initialize Elastic Beanstalk with EB CLI
         run: |
-          eb init -p python-3.12 --region ap-south-1 --no-verify
+          eb init -p docker --region ap-south-1 --no-verify
           eb use flask-app-demo-env || echo "Environment doesn't exist, skipping use"
 
       - name: Terminate Existing Elastic Beanstalk Environment
