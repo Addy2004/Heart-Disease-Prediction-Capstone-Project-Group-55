@@ -42,17 +42,30 @@ jobs:
           sudo apt-get install -y python3-pip
           pip3 install awsebcli --upgrade --user
           
-      - name: Terminate Elastic Beanstalk Environment (if exists)
+          - name: Terminate Existing Elastic Beanstalk Environment
+          run: |
+            eb terminate flask-app-demo-env --force --region ap-south-1 || echo "Environment doesn't exist, skipping termination"
+        
+      - name: Wait for Termination to Complete
         run: |
-          eb use flask-app-demo-env || echo "Environment not found, skipping termination"
-          eb terminate flask-app-demo-env --force || echo "Environment already terminated or doesn't exist"
-
-      - name: Create New Elastic Beanstalk Environment using Launch Template
+          while eb list | grep -q flask-app-demo-env; do
+            echo "Waiting for environment to terminate..."
+            sleep 10
+          done
+          echo "Environment terminated successfully."
+  
+      - name: Create New Elastic Beanstalk Environment with Launch Template
         run: |
-          eb create flask-app-demo-env --region ap-south-1 --launch-template LaunchTemplateName=flask-launch-template --no-verify --single
-
+          eb create flask-app-demo-env \
+            --region ap-south-1 \
+            --launch-template LaunchTemplateName=flask-launch-template \
+            --cname flask-app-demo-env \
+            --no-verify \
+            --single \
+            --instance-type t2.micro \
+            --env-vars DOCKER_IMAGE=${{ secrets.DOCKER_USERNAME }}/flask-app-demo:latest
+  
       - name: Deploy Docker Image to Elastic Beanstalk
         run: |
-          eb setenv DOCKER_IMAGE=${{ secrets.DOCKER_USERNAME }}/flask-app-demo:latest
           eb use flask-app-demo-env
           eb deploy --no-verify
