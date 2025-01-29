@@ -1,6 +1,8 @@
 import { useState } from "react";
 import InputField from "./InputField";
 import SubmitButton from "./SubmitButton";
+import LoadingSpinner from "./LoadingSpinner";
+import Result from "./Result";
 
 const Form = () => {
     const [formData, setFormData] = useState({
@@ -17,6 +19,9 @@ const Form = () => {
         stSlope: "",
     });
 
+    const [isLoading, setIsLoading] = useState(false);
+    const [responseMessage, setResponseMessage] = useState(null);
+
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData((prev) => ({
@@ -25,10 +30,56 @@ const Form = () => {
         }));
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         console.log('Form submitted:', formData);
-    }
+        setIsLoading(true);
+        setResponseMessage(null);
+
+        const requestData = {
+            "Age": parseInt(formData.age),
+            "Sex": formData.sex,
+            "ChestPainType": formData.chestPainType,
+            "RestingBP": parseInt(formData.restingBP),
+            "Cholesterol": parseInt(formData.cholesterol),
+            "FastingBS": parseInt(formData.fastingBS),
+            "RestingECG": formData.restingECG,
+            "MaxHR": parseInt(formData.maxHR),
+            "ExerciseAngina": formData.exerciseAngina,
+            "Oldpeak": parseFloat(formData.oldpeak),
+            "ST_Slope": formData.stSlope
+        };
+
+        try{
+            const response = await fetch("http://flask-app-server-env.ap-south-1.elasticbeanstalk.com/predict", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(requestData),
+            });
+
+            const data = await response.json();
+            if(response.ok){
+                setResponseMessage({
+                    success: true,
+                    message: "IM GOING TO BUST NUT ", 
+                });
+            } else{
+                setResponseMessage({
+                    success: false,
+                    message: "IM GONNA COMMIT GREAT CRIME"
+                });
+            }
+        } catch(error){
+            setResponseMessage({
+                success: false,
+                message: "Error: " + error.message,
+            });
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     return (
         <form 
@@ -156,6 +207,14 @@ const Form = () => {
             <SubmitButton
                 onSubmit={handleSubmit}
             />
+
+            {isLoading && <LoadingSpinner/>}
+            {responseMessage && (
+                <Result
+                    success={responseMessage.success}
+                    message={responseMessage.message}
+                />
+            )}
         </form>
     );
 };
