@@ -13,6 +13,8 @@ const InputField = ({ label, type, name, value, onChange, options = [] }) => {
             onChange({
                 target: { name, value: inputValue?.value || "" },
             });
+            setIsFocused(false);
+            setIsHovered(false);
         } else{
             const val = inputValue.target.value;
             if(type === "number") {
@@ -30,7 +32,12 @@ const InputField = ({ label, type, name, value, onChange, options = [] }) => {
     };
 
     const handleFocus = () => setIsFocused(true);
-    const handleBlur = () => setIsFocused(false);
+    const handleBlur = () => {
+        setTimeout(() => {
+            setIsFocused(false);
+            setIsHovered(false);
+        }, 100);
+    }
     const handleMouseEnter = () => setIsHovered(true);
     const handleMouseLeave = () => setIsHovered(false);
     const handleMenuOpen = () => {
@@ -40,8 +47,10 @@ const InputField = ({ label, type, name, value, onChange, options = [] }) => {
     const handleMenuClose = () => {
         setIsClosing(true);
         setTimeout(() => {
-            setMenuOpen(false)
-            setIsClosing(false)
+            setMenuOpen(false);
+            setIsClosing(false);
+            setIsFocused(false);
+            setIsHovered(false);
         }, 300);
     }                                                                   
 
@@ -64,13 +73,14 @@ const InputField = ({ label, type, name, value, onChange, options = [] }) => {
         control: (styles, state) => ({
             ...styles,
             backgroundColor: "#a8c94f",
-            borderColor: state.isFocused ? "#C94FA8": "#8EAF36",
+            borderColor: state.isFocused || isHovered ? "#C94FA8" : "#8EAF36",
             borderWidth: "2px",
             fontSize: '1rem',
             borderRadius: "1.00rem",
             display: "flex",
             justifyContent: "center",
             boxShadow: "none",
+            transition: "border-color 0.3s ease",
             '&:hover': {
                 borderColor: "#C94FA8"
             },
@@ -130,7 +140,7 @@ const InputField = ({ label, type, name, value, onChange, options = [] }) => {
             fontSize: "18px",
             fontWeight: "700",
             color: "#ebe778",//"#436b16",
-            disply: "flex",
+            display: "flex",
             justifyContent: "center",
             caretColor: "#ebe778",
             caretWidth: "5px",
