@@ -4,7 +4,7 @@ import RiskBar from "./RiskBar";
 const formatModelName = (name) => {
   return name
     .replace(/([a-z])([A-Z])/g, "$1 $2")
-    .replace(/\b(Svm|Knn|Xgboost)\b/gi, (match) => match.toUpperCase())
+    .replace(/\b(Svm|Knn|Rbf)\b/gi, (match) => match.toUpperCase())
     .replace(/\b(Ai|Ml|Mn)\b/gi, (match) => match.toUpperCase())
     .replace(/\b\w/g, (char) => char.toUpperCase())
     .replace(/\bXgboost\b/gi, "XGBoost")

@@ -66,7 +66,7 @@ const RiskBar = ({ label, probability }) => {
       <div className="text-xl font-semibold mb-2 text-center">{label}</div>
 
       {/* Bar container */}
-      <div className="relative w-full max-w-lg bg-gray-700 h-8 rounded-lg overflow-hidden flex items-center justify-center">
+      <div className="relative w-full max-w-xl bg-gray-700 h-7.5 rounded-xl overflow-hidden flex items-center justify-center">
         {/* Animated Colored Bar */}
         <div
           className={`
