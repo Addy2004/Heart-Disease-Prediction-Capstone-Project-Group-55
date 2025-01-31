@@ -2,7 +2,7 @@ import { useState } from "react";
 import InputField from "./InputField";
 import SubmitButton from "./SubmitButton";
 
-const Form = ({ setIsLoading, setResponseMessage }) => {
+const Form = ({ setIsLoading, setResponseMessage, handleResponse }) => {
   const [formData, setFormData] = useState({
     age: "",
     sex: "",
@@ -58,11 +58,14 @@ const Form = ({ setIsLoading, setResponseMessage }) => {
       );
 
       const data = await response.json();
+      console.log("API Response:", data);
+
       if (response.ok) {
         setResponseMessage({
           success: true,
           message: "IM GOING TO BUST NUT ",
         });
+        handleResponse(data);
       } else {
         setResponseMessage({
           success: false,
