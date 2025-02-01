@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 
-const greenColor = [34, 197, 94];
-const yellowColor = [234, 179, 8];
-const redColor = [239, 68, 68];
+const greenColor = [157, 225, 0];
+const yellowColor = [239, 199, 0];
+const redColor = [188, 0, 0];
 
 const barDuration = 3000;
 
@@ -63,10 +63,12 @@ const RiskBar = ({ label, probability }) => {
   return (
     <div className="flex flex-col items-center mb-6">
       {/* Label */}
-      <div className="text-xl font-semibold mb-2 text-center">{label}</div>
+      <div className="text-xl font-semibold mb-2 text-[#ebe778] text-center">
+        {label}
+      </div>
 
       {/* Bar container */}
-      <div className="relative w-full max-w-xl bg-gray-700 h-7.5 rounded-xl overflow-hidden flex items-center justify-center">
+      <div className="relative w-full max-w-3xl bg-gray-700 h-8 rounded-2xl overflow-hidden flex items-center justify-center">
         {/* Animated Colored Bar */}
         <div
           className={`
@@ -80,10 +82,18 @@ const RiskBar = ({ label, probability }) => {
           style={{
             width: `${currentWidth}%`,
             background: barColor,
+            border: "2px solid rgba(94, 76, 85, 0.8)",
+            boxSizing: "border-box",
+            borderRadius: "1.00rem",
           }}
         />
         {/* Animated Probability Text */}
-        <span className="relative text-lg font-bold text-white z-10">
+        <span
+          className="relative text-lg font-bold transition-colors duration-900 z-10"
+          style={{
+            color: currentWidth > 45 ? "#FFFFFF" : "#C94FA8",
+          }}
+        >
           {displayedProbability}%
         </span>
       </div>

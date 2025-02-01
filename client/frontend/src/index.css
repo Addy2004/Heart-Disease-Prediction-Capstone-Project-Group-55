@@ -26,6 +26,7 @@ a:hover {
 
 body {
   margin: 0;
+  overflow-x: hidden;
   display: flex;
   place-items: center;
   min-width: 320px;
@@ -67,4 +68,18 @@ button:focus-visible {
   button {
     background-color: #f9f9f9;
   }
+}
+
+/* Hide Scroll bar (for Chrome, Safari, Edge, Firefox and Internet Explorer) */
+
+::-webkit-scrollbar {
+  display: none;
+}
+
+* {
+  scrollbar-width: none;
+}
+
+body {
+  -ms-overflow-style: none;
 }

@@ -24,15 +24,16 @@ const Result = ({ success, message, modelData }) => {
     <div
       className={`
             w-full
-            max-w-5xl
+            max-w-4xl
             mx-auto
             mt-6
             mb-20
             sm:p-8
             p-6
-            rounded-lg
+            rounded-4xl
             shadow-lg
             text-center
+            overflow-hidden
             ${success ? "bg-[#7fa616] text-white" : "bg-red-500 text-white"}
         `}
     >
