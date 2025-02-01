@@ -9,14 +9,20 @@ const App = () => {
   const [responseMessage, setResponseMessage] = useState(null);
   const [modelData, setModelData] = useState(null);
 
-  const handleResponse = (data) => {
+  const handleResponse = (data, errorMessage = null) => {
     if (data && data.models) {
       setModelData(data.models);
+      setResponseMessage({
+        success: true,
+        message: "Prediction complete!",
+      });
+    } else {
+      setModelData(null);
+      setResponseMessage({
+        success: false,
+        message: errorMessage || "An unknown error occurred.",
+      });
     }
-    setResponseMessage({
-      success: true,
-      message: "Prediction complete!",
-    });
   };
 
   return (

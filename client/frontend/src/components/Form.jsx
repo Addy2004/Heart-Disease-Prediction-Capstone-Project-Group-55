@@ -90,7 +90,7 @@ const Form = ({ setIsLoading, setResponseMessage, handleResponse }) => {
     }
     if (!data.stSlope || !["Up", "Flat", "Down"].includes(data.stSlope)) {
       newErrors.stSlope =
-        "Invalid or missing 'ST_Slope'. Must be 'Upsloping', 'Flat', 'Downsloping'.";
+        "Invalid or missing 'ST Slope'. Must be 'Upsloping', 'Flat', 'Downsloping'.";
     }
 
     setErrors(newErrors);
@@ -116,7 +116,12 @@ const Form = ({ setIsLoading, setResponseMessage, handleResponse }) => {
 
     console.log("Form submitted:", formData);
     setIsLoading(true);
-    setResponseMessage(null);
+    setResponseMessage({
+      success: false,
+      message: "",
+      errors: [],
+    });
+    setErrors({});
 
     const requestData = {
       Age: parseInt(formData.age),
@@ -150,20 +155,32 @@ const Form = ({ setIsLoading, setResponseMessage, handleResponse }) => {
       if (response.ok) {
         setResponseMessage({
           success: true,
-          message: "IM GOING TO BUST NUT ",
+          message: "Prediction successful.",
         });
         handleResponse(data);
       } else {
         setResponseMessage({
           success: false,
-          message: "IM GONNA COMMIT GREAT CRIME",
+          message: data.message || "An error occured.",
+          errors: [],
         });
+        handleResponse(null, data.message);
       }
     } catch (error) {
+      console.error("Fetch error: ", error);
+
+      let errorMessage = "Network error: Unable to reach the server.";
+
+      if (!navigator.onLine) {
+        errorMessage = "No internet connection. Please check your network.";
+      }
       setResponseMessage({
         success: false,
-        message: "Error: " + error.message,
+        message: errorMessage /*"Network error: Unable to reach the server.",*/,
+        errors: [],
       });
+
+      handleResponse(null, errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -242,18 +259,20 @@ const Form = ({ setIsLoading, setResponseMessage, handleResponse }) => {
       onSubmit={handleSubmit}
       className="max-w-full mx-auto bg-[#7fa616] shadow-md rounded-4xl pr-10 pl-10 pt-6 pb-6 mb-20"
     >
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {formFields.slice(0, 9).map(({ name, label, type, options }) => (
-          <InputField
-            key={name}
-            label={label}
-            type={type}
-            name={name}
-            value={formData[name]}
-            onChange={handleChange}
-            options={options}
-          />
-        ))}
+      <div className="flex justify-center">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {formFields.slice(0, 9).map(({ name, label, type, options }) => (
+            <InputField
+              key={name}
+              label={label}
+              type={type}
+              name={name}
+              value={formData[name]}
+              onChange={handleChange}
+              options={options}
+            />
+          ))}
+        </div>
       </div>
       <div className="md:col-span-3 flex justify-center">
         <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -283,7 +302,7 @@ const Form = ({ setIsLoading, setResponseMessage, handleResponse }) => {
       {/* Error Display */}
       {submitted && Object.keys(errors).length > 0 && (
         <div
-          className="mt-8 p-2 rounded-xl mx-auto max-w-2xl max-h-xl overflow-auto flex flex-col items-center justify-center text-center"
+          className="mt-8 p-2 rounded-2xl shadow-md mx-auto max-w-2xl max-h-xl overflow-auto flex flex-col items-center justify-center text-center"
           style={{
             color: "#EBE778",
             fontSize: "18px",
