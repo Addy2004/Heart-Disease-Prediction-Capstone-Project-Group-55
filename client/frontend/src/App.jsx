@@ -9,20 +9,29 @@ const App = () => {
   const [responseMessage, setResponseMessage] = useState(null);
   const [modelData, setModelData] = useState(null);
 
-  const handleResponse = (data, errorMessage = null) => {
+  const handleResponse = (data, message, errors = []) => {
+    console.log("handleResponse received:", { data, message, errors });
     if (data && data.models) {
       setModelData(data.models);
       setResponseMessage({
         success: true,
         message: "Prediction complete!",
+        errors: [],
       });
     } else {
       setModelData(null);
       setResponseMessage({
         success: false,
-        message: errorMessage || "An unknown error occurred.",
+        message: message || "An unknown error occurred.",
+        errors: errors,
       });
     }
+  };
+
+  // To reset the form
+  const resetForm = () => {
+    setResponseMessage(null);
+    setModelData(null);
   };
 
   return (
@@ -38,7 +47,9 @@ const App = () => {
         <Result
           success={responseMessage.success}
           message={responseMessage.message}
+          errors={responseMessage.errors}
           modelData={modelData}
+          onBack={resetForm}
         />
       ) : (
         <Form

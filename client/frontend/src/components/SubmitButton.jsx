@@ -10,7 +10,7 @@ const SubmitButton = ({ onSubmit, isValid }) => {
     fontWeight: "700",
     fontSize: isValid ? (isHovered ? "30px" : "18px") : "18px",
     padding: "10px 0",
-    width: isValid ? (isHovered ? "60%" : "50%") : "50%",
+    width: isValid ? (isHovered ? "50%" : "40%") : "40%",
     textAlign: "center",
     transition:
       "background-color 0.3s ease, transform 0.3s ease, font-size 0.3s ease, width 0.6s ease",

@@ -82,7 +82,7 @@ const RiskBar = ({ label, probability }) => {
           style={{
             width: `${currentWidth}%`,
             background: barColor,
-            border: "2px solid rgba(94, 76, 85, 0.8)",
+            border: "2px solid rgba(94, 76, 85, 0.4)",
             boxSizing: "border-box",
             borderRadius: "1.00rem",
           }}

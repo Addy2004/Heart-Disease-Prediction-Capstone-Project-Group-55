@@ -18,7 +18,7 @@ const Form = ({ setIsLoading, setResponseMessage, handleResponse }) => {
   });
 
   const [errors, setErrors] = useState({});
-  const [isValid, setIsValid] = useState(false);
+  const [isValid, setIsValid] = useState(false); // should be false by default
   const [submitted, setSubmitted] = useState(false);
 
   const validateForm = (data) => {
@@ -151,36 +151,49 @@ const Form = ({ setIsLoading, setResponseMessage, handleResponse }) => {
 
       const data = await response.json();
       console.log("API Response:", data);
-
       if (response.ok) {
         setResponseMessage({
           success: true,
           message: "Prediction successful.",
-        });
-        handleResponse(data);
-      } else {
-        setResponseMessage({
-          success: false,
-          message: data.message || "An error occured.",
           errors: [],
         });
-        handleResponse(null, data.message);
+        handleResponse(data, []);
+      } else {
+        const errorMessage = `Error ${response.status}`;
+        const errorList = data.errors || [];
+        setResponseMessage({
+          success: false,
+          message: errorMessage,
+          errors: errorList,
+        });
+        handleResponse(null, errorMessage, errorList);
       }
     } catch (error) {
       console.error("Fetch error: ", error);
 
       let errorMessage = "Network error: Unable to reach the server.";
+      let errorList = [];
 
       if (!navigator.onLine) {
         errorMessage = "No internet connection. Please check your network.";
+      } else if (error.response) {
+        try {
+          const errorData = await error.response.json();
+          if (Array.isArray(errorData.errors)) {
+            errorList = errorData.errors;
+          }
+          errorMessage = errorData.message || "hmmmmm";
+        } catch (parseError) {
+          console.error("Error parsing JSON response: ", parseError);
+        }
       }
       setResponseMessage({
         success: false,
-        message: errorMessage /*"Network error: Unable to reach the server.",*/,
-        errors: [],
+        message: errorMessage,
+        errors: errorList.length > 0 ? errorList : [errorMessage],
       });
 
-      handleResponse(null, errorMessage);
+      handleResponse(null, errorMessage, errorList);
     } finally {
       setIsLoading(false);
     }
