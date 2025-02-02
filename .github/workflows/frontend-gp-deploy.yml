@@ -3,7 +3,7 @@ name: Deploy Vite + React frontend to Github Pages
 on:
   push:
     branches:
-      - bruh
+      - main
 
 permissions:
   contents: write
