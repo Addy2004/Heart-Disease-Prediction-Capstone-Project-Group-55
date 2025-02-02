@@ -81,6 +81,7 @@ jobs:
           chmod 400 $KEY_NAME.pem
           echo "KEY_NAME=$KEY_NAME" >> $GITHUB_ENV
           echo "KEY_FILE=$KEY_NAME.pem" >> $GITHUB_ENV
+          ls -ld
 
       - name: Retrieve EC2 Instance & Security Group Info
         run: |
@@ -117,6 +118,7 @@ jobs:
 
       - name: Install Certbot and Enable HTTPS
         run: |
+          ls -ld
           ssh -i ${{ env.KEY_FILE }} -o StrictHostKeyChecking=no ec2-user@${{ env.PUBLIC_IP }} << 'EOF'
             sudo yum update -y
             sudo yum install -y nginx
