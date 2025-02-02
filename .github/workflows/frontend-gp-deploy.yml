@@ -21,15 +21,18 @@ jobs:
         with:
           node-version: 18
           cache: "npm"
+        run: pwd
 
       - name: Install Dependencies
         run: |
           cd client/frontend
+          pwd
           npm install
 
       - name: Build frontend
         run: |
           cd client/frontend
+          pwd
           npm run build
 
       - name: Deploy to Github Pages
