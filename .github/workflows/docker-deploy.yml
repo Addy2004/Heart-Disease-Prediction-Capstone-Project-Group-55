@@ -74,21 +74,34 @@ jobs:
           eb use flask-app-server-env
           eb deploy --no-verify
 
-      - name: Install Certbot and Enable HTTPS
+      - name: Retrieve EC2 Instance & Security Group Info
         run: |
           EB_INSTANCE_ID=$(aws ec2 describe-instances \
-            --filters "Name=tag:elasticbeanstalk:environment-name,Values=flask-app-server-env" \
-            --query "Reservations[*].Instances[*].InstancesId" --output text)
+            --filters "Name:tag:elasticbeanstalk:environment-name,Values=flask-app-server-env" \
+            --query "Reservations[*].Instances[*].InstanceId" --output text)
+          echo "EC2_INSTANCE_ID=$EB_INSTANCE_ID" >> $GITHUB_ENV
 
-          echo "EC2 Instance ID: $EB_INSTANCE_ID"
+          SG_ID=$(aws ec2 describe-instances \
+            --instance-ids $EB_INSTANCE_ID \
+            --query "Reservations[0].Instances[0].SecurityGroups[0].GroupId" --output text)
+            echo "SECURITY_GROUP_ID=$SG_ID" >> $GITHUB_ENV
 
           PUBLIC_IP=$(aws ec2 describe-instances \
             --instance-ids $EB_INSTANCE_ID \
             --query "Reservations[*].Instances[*].PublicIpAddress" --output text)
+            echo "PUBLIC_IP=$PUBLIC_IP" >> $GITHUB_ENV
 
-          echo "Public IP: $PUBLIC_IP"
+      - name: Allow Access Temporarily
+        run: |
+          RUNNER_IP=$(curl -s http://checkip.amazonaws.com)
 
-          ssh -o StrictHostKeyChecking=no ec2-user@$PUBLIC_IP << 'EOF'
+          aws ec2 authorize-security-group-ingress \
+            --group-id ${{ env.SECURITY_GROUP_ID }} \
+            --protocol tcp --port 22 --cidr ${RUNNER_IP}/32
+
+      - name: Install Certbot and Enable HTTPS
+        run: |
+          ssh -o StrictHostKeyChecking=no ec2-user@${{ env.PUBLIC_IP }} << 'EOF'
             sudo yum update -y
             sudo yum install -y nginx
             sudo amazon-linux-extras enable epel
@@ -100,3 +113,11 @@ jobs:
 
             sudo systemctl restart nginx
           EOF
+
+      - name: Remove SSH Access for Security
+        run: |
+          RUNNER_IP=$(curl -s http://checkip.amazonaws.com)
+
+          aws ec2 revoke-security-group-ingress \
+            --group-id ${{ env.SECURITY_GROUP_ID }} \
+            --protocol tcp --port 22 --cidr ${RUNNER_IP}/32
