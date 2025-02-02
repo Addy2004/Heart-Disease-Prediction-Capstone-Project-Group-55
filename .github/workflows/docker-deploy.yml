@@ -73,3 +73,30 @@ jobs:
         run: |
           eb use flask-app-server-env
           eb deploy --no-verify
+
+      - name: Install Certbot and Enable HTTPS
+        run: |
+          EB_INSTANCE_ID=$(aws ec2 describe-instances \
+            --filters "Name=tag:elasticbeanstalk:environment-name,Values=flask-app-server-env" \
+            --query "Reservations[*].Instances[*].InstancesId" --output text)
+
+          echo "EC2 Instance ID: $EB_INSTANCE_ID"
+
+          PUBLIC_IP=$(aws ec2 describe-instances \
+            --instance-ids $EB_INSTANCE_ID \
+            --query "Reservations[*].Instances[*].PublicIpAddress" --output text)
+
+          echo "Public IP: $PUBLIC_IP"
+
+          ssh -o StrictHostKeyChecking=no ec2-user@$PUBLIC_IP << 'EOF'
+            sudo yum update -y
+            sudo yum install -y nginx
+            sudo amazon-linux-extras enable epel
+            sudo yum install -y certbot python3-certbot-nginx
+            sudo systemctl start nginx
+            sudo systemctl enable nginx
+
+            sudo certbot --nginx -d flask-app-server-env.ap-south-1.elasticbeanstalk.com --non-interactive --agree-tos -m singhaadi2004@gmail.com
+
+            sudo systemctl restart nginx
+          EOF
