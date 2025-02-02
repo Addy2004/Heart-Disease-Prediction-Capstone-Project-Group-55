@@ -84,8 +84,8 @@ jobs:
           echo "EC2_INSTANCE_ID=$EB_INSTANCE_ID" >> $GITHUB_ENV
 
           SG_ID=$(aws ec2 describe-instances \
-            --instance-ids $EB_INSTANCE_ID \
-            --query "Reservations[0].Instances[0].SecurityGroups[0].GroupId" --output text)
+            --instance-ids "$EB_INSTANCE_ID" \
+            --query "Reservations[*].Instances[*].SecurityGroups[*].GroupId" --output text | head -n 1)
 
           echo "SECURITY_GROUP_ID:= $SG_ID"
           echo "SECURITY_GROUP_ID=$SG_ID" >> $GITHUB_ENV
