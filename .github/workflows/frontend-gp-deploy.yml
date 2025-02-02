@@ -1,0 +1,39 @@
+name: Deploy Vite + React frontend to Github Pages
+
+on:
+  push:
+    branches:
+      - bruh
+
+permissions:
+  contents: write
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 23
+          cache: "npm"
+
+      - name: Install Dependencies
+        run: |
+          cd client
+          npm install
+
+      - name: Build frontend
+        run: |
+          cd client/frontend
+          npm run build
+
+      - name: Deploy to Github Pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: gh-pages
+          folder: dist
