@@ -81,10 +81,12 @@ jobs:
             --query "Reservations[*].Instances[*].InstanceId" --output text | awk '{print $1}')
 
           echo "EC2_INSTANCE_ID:= $EB_INSTANCE_ID"
-          echo "EC2_INSTANCE_ID=$EB_INSTANCE_ID" >> $GITHUB_ENV
+          echo "EC2_INSTANCE_ID<<EOF" >> $GITHUB_ENV
+          echo "$EB_INSTANCE_ID" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
 
           SG_ID=$(aws ec2 describe-instances \
-            --instance-ids "$EB_INSTANCE_ID" \
+            --instance-ids $EB_INSTANCE_ID \
             --query "Reservations[*].Instances[*].SecurityGroups[*].GroupId" --output text | head -n 1)
 
           echo "SECURITY_GROUP_ID:= $SG_ID"
