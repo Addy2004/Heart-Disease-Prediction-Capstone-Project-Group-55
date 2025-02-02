@@ -21,7 +21,6 @@ jobs:
         with:
           node-version: 18
           cache: "npm"
-        run: pwd
 
       - name: Install Dependencies
         run: |
