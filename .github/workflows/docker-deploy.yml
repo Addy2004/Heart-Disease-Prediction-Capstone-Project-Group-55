@@ -73,8 +73,7 @@ jobs:
             --region ap-south-1 \
             --cname flask-app-server-env \
             --no-verify \
-            --single \
-            --instance-type t2.micro \
+            --instance-type t3.small \
             --keyname ${{ env.KEY_NAME }} \
             --envvars DOCKER_IMAGE=${{ secrets.DOCKER_USERNAME }}/flask-app-server:latest
 
