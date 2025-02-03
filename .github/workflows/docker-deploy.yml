@@ -125,6 +125,7 @@ jobs:
             sudo yum update -y
             sudo yum install -y nginx
             sudo amazon-linux-extras enable epel
+            sudo yum install -y epel-release
             sudo yum install -y certbot python2-certbot-nginx
 
             sudo systemctl start nginx
