@@ -125,7 +125,7 @@ jobs:
             sudo yum update -y
 
             sudo yum groupinstall -y "Development Tools"
-            sudo yum install openssl11
+            sudo yum install -y openssl11
             sudo yum install -y gcc gcc-c++ make zlib-devel bzip2 bzip-devel readline-devel \
                 sqlite sqlite-devel openssl-devel tk-devel libffi-devel xz-devel
               
