@@ -126,7 +126,17 @@ jobs:
             sudo yum update -y
             sudo yum install -y nginx
             sudo amazon-linux-extras enable epel
-            sudo yum install -y certbot python3-certbot-nginx
+            sudo yum install -y epel-release
+            sudo yum install -y snapd
+            sudo systemctl enable --now snapd.socket
+            sudo ln -s /var/lib/snapd/snap /snap
+
+            sudo snap install core
+            sudo snap refresh core
+            sudo snap install --classic certbot
+
+            sudo ln -s /snap/bin/certbot /usr/bin/certbot
+
             sudo systemctl start nginx
             sudo systemctl enable nginx
 
