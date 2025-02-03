@@ -147,13 +147,7 @@ jobs:
 
       - name: Modify Instance Type to t2.micro After Certbot Setup
         run: |
-          EB_INSTANCE_ID=$(aws ec2 describe-instances \
-            --filters "Name=tag:elasticbeanstalk:environment-name,Values=flask-app-server-env" \
-            --query "Reservations[*].Instances[*].InstanceId" --output text | awk '{print $1}')
-
-          echo "Changing instance type to t2.micro..."
-
-          aws ec2 modify-instance-attribute --instance-id $EB_INSTANCE_ID --instance-type t2.micro
+          aws ec2 modify-instance-attribute --instance-id ${{ env.EC2_INSTANCE_ID }} --instance-type t2.micro
 
           echo "Instance type changed to t2.micro"
 
