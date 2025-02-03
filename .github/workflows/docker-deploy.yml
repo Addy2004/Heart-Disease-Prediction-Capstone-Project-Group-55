@@ -147,9 +147,23 @@ jobs:
 
       - name: Modify Instance Type to t2.micro After Certbot Setup
         run: |
-          aws ec2 modify-instance-attribute --instance-id ${{ env.EC2_INSTANCE_ID }} --instance-type t2.micro
 
-          echo "Instance type changed to t2.micro"
+          echo "Stopping instance ${{ env.EC2_INSTANCE_ID }}..."
+          aws ec2 stop-instances --instance-ids ${{ env.EC2_INSTANCE_ID }}
+
+          echo "Waiting for instance to stop..."
+          aws ec2 wait instance-stopped --instance-ids ${{ env.EC2_INSTANCE_ID }}
+
+          echo "Modifying instance type to t2.micro..."
+          aws ec2 modify-instance-attribute --instance-id ${{ env.EC2_INSTANCE_ID }} --instance-type "{\"Value\": \"t2.micro\"}"
+
+          echo "Starting instance ${{ env.EC2_INSTANCE_ID }}..."
+          aws ec2 start-instances --instance-ids ${{ env.EC2_INSTANCE_ID }}
+
+          echo "Waiting for instance to be running..."
+          aws ec2 wait instance-running --instance-ids ${{ env.EC2_INSTANCE_ID }}
+
+          echo "Instance type changed to t2.micro and restarted successfully."
 
       - name: Remove SSH Access for Security
         run: |
