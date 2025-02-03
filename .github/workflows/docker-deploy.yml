@@ -123,6 +123,11 @@ jobs:
         run: |
           ssh -v -i ${{ env.KEY_FILE }} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ServerAliveInterval=30 -o ServerAliveCountMax=5 ec2-user@${{ env.PUBLIC_IP }} << 'EOF'
             sudo yum update -y
+            sudo amazon-linux-extras enable python3.12
+            sudo yum install -y python3.12 python3.12-pip python3.12-venv
+            sudo alternatives --install /usr/bin/python3 python3 /usr/bin/python3.12 1
+            sudo alternatives --set python3 /usr/bin/python3.12
+
             sudo yum install -y nginx
             sudo amazon-linux-extras enable epel
             sudo yum install -y epel-release
