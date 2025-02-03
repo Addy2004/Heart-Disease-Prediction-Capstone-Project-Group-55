@@ -127,7 +127,12 @@ jobs:
             sudo amazon-linux-extras enable epel
             sudo yum install -y epel-release
 
-            sudo yum install -y certbot python3-certbot-nginx
+            sudo python3 -m venv /opt/certbot/
+            sudo /opt/certbot/bin/pip install --upgrade pip
+
+            sudo /opt/certbot/bin/pip install certbot certbot-nginx
+
+            sudo ln -s /opt/certbot/bin/certbot /usr/bin/certbot
 
             sudo systemctl start nginx
             sudo systemctl enable nginx
@@ -135,6 +140,8 @@ jobs:
             sudo certbot --nginx -d flask-app-server-env.ap-south-1.elasticbeanstalk.com --non-interactive --agree-tos -m singhaadi2004@gmail.com
 
             sudo systemctl restart nginx
+
+            echo "0 0, 12 * * * root /opt/certbot/bin/python -c 'import random; import time; time.sleep(random.random() * 3600)' && sudo certbot renew -q" | sudo tee -a /etc/crontab > /dev/null
           EOF
 
       - name: Remove SSH Access for Security
