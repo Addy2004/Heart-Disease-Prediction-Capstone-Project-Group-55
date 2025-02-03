@@ -117,7 +117,7 @@ jobs:
 
       - name: Install Certbot and Enable HTTPS
         run: |
-          ssh -v -i ${{ env.KEY_FILE }} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ec2-user@${{ env.PUBLIC_IP }} << 'EOF'
+          ssh -v -i ${{ env.KEY_FILE }} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ubuntu@${{ env.PUBLIC_IP }} << 'EOF'
             sudo yum update -y
             sudo yum install -y nginx
             sudo amazon-linux-extras enable epel
