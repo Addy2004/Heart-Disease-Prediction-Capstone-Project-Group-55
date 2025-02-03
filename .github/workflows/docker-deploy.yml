@@ -128,6 +128,8 @@ jobs:
             sudo yum install -y epel-release
             sudo yum install -y certbot python2-certbot-nginx
 
+            sudo sed -i '1s|^|server_names_hash_bucket_size 128;\n|' /etc/nginx/nginx.conf
+
             sudo systemctl start nginx
             sudo systemctl enable nginx
 
