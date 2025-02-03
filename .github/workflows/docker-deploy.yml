@@ -116,6 +116,10 @@ jobs:
             --group-id ${{ env.SECURITY_GROUP_ID }} \
             --protocol tcp --port 22 --cidr ${RUNNER_IP}/32
 
+          aws ec2 authorize-security-group-ingress \
+            --group-id ${{ env.SECURITY_GROUP_ID }} \
+            --protocol tcp --port 443 --cidr 0.0.0.0/0
+
       - name: Debug Security Group Rules
         run: |
           aws ec2 describe-security-groups --group-ids ${{ env.SECURITY_GROUP_ID }}
@@ -134,7 +138,7 @@ jobs:
             sudo systemctl start nginx
             sudo systemctl enable nginx
 
-            sudo certbot --nginx -d flask-app-server-env.ap-south-1.elasticbeanstalk.com --non-interactive --agree-tos -m singhaadi2004@gmail.com
+            sudo certbot --nginx -d flask-app-server-env.ap-south-1.elasticbeanstalk.com --non-interactive --agree-tos -m ${{ secrets.MAH_EMAIL }}
 
             sudo systemctl restart nginx
 
