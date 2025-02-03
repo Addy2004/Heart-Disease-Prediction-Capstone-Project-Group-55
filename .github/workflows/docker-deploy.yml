@@ -62,7 +62,7 @@ jobs:
       - name: Create a new EC2 Key Pair
         run: |
           KEY_NAME="temp-keypair-${{ github.run_id }}"
-          aws ec2 create-key-pair --key-name $KEY_NAME --query 'KeyMaterial' --output text > $KEY_NAME.pem
+          aws ec2 create-key-pair --key-name $KEY_NAME --query 'KeyMaterial' --output text > $KEY_NAME.pem | tee $KEY_NAME.pem
           chmod 400 $KEY_NAME.pem
           echo "KEY_NAME=$KEY_NAME" >> $GITHUB_ENV
           echo "KEY_FILE=$KEY_NAME.pem" >> $GITHUB_ENV
@@ -122,7 +122,7 @@ jobs:
 
       - name: Install Certbot and Enable HTTPS
         run: |
-          ssh -v -i ${{ env.KEY_FILE }} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ec2-user@${{ env.PUBLIC_IP }} << 'EOF'
+          ssh -v -i ${{ env.KEY_FILE }} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ServerAliveInterval=30 -o ServerAliveCountMax=5 ec2-user@${{ env.PUBLIC_IP }} << 'EOF'
             sudo yum update -y
             sudo yum install -y nginx
             sudo amazon-linux-extras enable epel
