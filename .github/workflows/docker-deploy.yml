@@ -87,7 +87,7 @@ jobs:
         run: |
           EB_INSTANCE_ID=$(aws ec2 describe-instances \
             --filters "Name=tag:elasticbeanstalk:environment-name,Values=flask-app-server-env" \
-            --query "Reservations[*].Instances[*].InstanceId" --output text | awk '{print $1}')
+            --query "Reservations[*].Instances[*].InstanceId" --output text | head -n 1)
 
           echo "EC2_INSTANCE_ID:= $EB_INSTANCE_ID"
           echo "EC2_INSTANCE_ID<<EOF" >> $GITHUB_ENV
@@ -138,7 +138,7 @@ jobs:
             sudo systemctl start nginx
             sudo systemctl enable nginx
 
-            sudo certbot --nginx -d flask-app-server-env.ap-south-1.elasticbeanstalk.com --non-interactive --agree-tos -m ${{ secrets.MAH_EMAIL }}
+            sudo certbot --nginx -d flask-app-server-env.ap-south-1.elasticbeanstalk.com --non-interactive --agree-tos -m ${{ secrets.MAH_EMAIL }} --test-cert
 
             sudo systemctl restart nginx
 
@@ -155,7 +155,7 @@ jobs:
           aws ec2 wait instance-stopped --instance-ids ${{ env.EC2_INSTANCE_ID }}
 
           echo "Modifying instance type to t2.micro..."
-          aws ec2 modify-instance-attribute --instance-id ${{ env.EC2_INSTANCE_ID }} --instance-type "{\"Value\": \"t2.micro\"}"
+          aws ec2 modify-instance-attribute --instance-id ${{ env.EC2_INSTANCE_ID }} --instance-type t2.micro
 
           echo "Starting instance ${{ env.EC2_INSTANCE_ID }}..."
           aws ec2 start-instances --instance-ids ${{ env.EC2_INSTANCE_ID }}
