@@ -224,7 +224,7 @@ jobs:
 
           NAME=$(echo $DNS_RECORD | jq -r .Name)
           TYPE=$(echo $DNS_RECORD | jq -r .Type)
-          VALUE+$(echo $DNS_RECORD | jq -r .Value)
+          VALUE=$(echo $DNS_RECORD | jq -r .Value)
 
           aws route53 change-resource-record-sets \
             --hosted-zone-id $HOSTED_ZONE_ID \
