@@ -205,6 +205,47 @@ jobs:
           echo "Certificate ARN: $CERT_ARN"
           echo "CERT_ARN=$CERT_ARN" >> $GITHUB_ENV
 
+      - name: Get Hosted Zone ID for DNS Validation
+        run: |
+          HOSTED_ZONE_ID=$(aws route53 list-hosted-zones-by-name \
+            --dns-name flask-app-server-env.ap-south-1.elasticbeanstalk.com --query "HostedZones[0].Id" --output text)
+            echo "Hosted Zone ID: $HOSTED_ZONE_ID"
+            echo "HOSTED_ZONE_ID=$HOSTED_ZONE_ID" >> $GITHUB_ENV
+
+      - name: Create DNS Validation Record in Route 53
+        run: |
+          CERTIFICATE_ARN=${{ env.CERT_ARN }}
+          HOSTED_ZONE_ID=${{ env.HOSTED_ZONE_ID }}
+
+          DNS_RECORD=$(aws acm describe-certificate \
+            --certificate-arn $CERTIFICATE_ARN \
+            --query 'Certificate.DomainValidationOptions[0].ResourceRecord' \
+            --output json)
+
+          NAME=$(echo $DNS_RECORD | jq -r .Name)
+          TYPE=$(echo $DNS_RECORD | jq -r .Type)
+          VALUE+$(echo $DNS_RECORD | jq -r .Value)
+
+          aws route53 change-resource-record-sets \
+            --hosted-zone-id $HOSTED_ZONE_ID \
+            --change-batch '{
+              "Changes": [
+                {
+                  "Action": "UPSERT",
+                  "ResourceRecordSet": {
+                    "Name": "'$NAME'",
+                    "Type": "'$TYPE'",
+                    "TTL": 60,
+                    "ResourceRecords": [
+                      {
+                        "Value": "'$VALUE'"
+                      }
+                    ]
+                  }
+                }
+              ]
+            }'
+
       - name: Waiting for the certificate to be issued and validated
         run: |
           echo "Waiting for the certificate to be issued..."
