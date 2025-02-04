@@ -67,7 +67,6 @@ jobs:
             --no-verify \
             --single \
             --instance-type t2.micro \
-            --keyname ${{ env.KEY_NAME }} \
             --envvars DOCKER_IMAGE=${{ secrets.DOCKER_USERNAME }}/flask-app-server:latest
 
       - name: Deploy Docker Image to Elastic Beanstalk
