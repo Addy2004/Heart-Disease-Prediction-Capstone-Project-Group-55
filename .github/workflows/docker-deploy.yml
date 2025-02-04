@@ -87,8 +87,8 @@ jobs:
         run: |
           EB_INSTANCE_ID=$(aws ec2 describe-instances \
             --filters "Name=tag:elasticbeanstalk:environment-name,Values=flask-app-server-env" "Name=instance-state-name,Values=running" \
-            --query "Reservations[*].Instances[*].InstanceId" \
-            --output text | awk '{print $1}')
+            --query "Reservations[*].Instances[*].[InstanceId,LaunchTime]" \
+            --output text | sort -k2 | tail -n 1 | awk '{print $1}')
 
           if [[ -z "$EB_INSTANCE_ID" ]]; then
             echo "Error: No running EC2 instance in EB env."
@@ -154,20 +154,25 @@ jobs:
       - name: Modify Instance Type to t2.micro After Certbot Setup
         run: |
 
-          echo "Stopping instance ${{ env.EC2_INSTANCE_ID }}..."
-          aws ec2 stop-instances --instance-ids ${{ env.EC2_INSTANCE_ID }}
+          EB_EC2_INSTANCE_ID=$(aws ec2 describe-instances \
+            --filters "Name=tag:elasticbeanstalk:environment-name,Values=flask-app-server-env" "Name=instance-state-name,Values=running" \
+            --query "Reservations[*].Instances[*].[InstanceId,LaunchTime]" \
+            --output text | sort -k2 | tail -n 1 | awk '{print $1}')
+
+          echo "Stopping instance $EB2_EC2_INSTANCE_ID..."
+          aws ec2 stop-instances --instance-ids $EB2_EC2_INSTANCE_ID
 
           echo "Waiting for instance to stop..."
-          aws ec2 wait instance-stopped --instance-ids ${{ env.EC2_INSTANCE_ID }}
+          aws ec2 wait instance-stopped --instance-ids $EB2_EC2_INSTANCE_ID
 
           echo "Modifying instance type to t2.micro..."
-          aws ec2 modify-instance-attribute --instance-id ${{ env.EC2_INSTANCE_ID }} --instance-type t2.micro
+          aws ec2 modify-instance-attribute --instance-id $EB2_EC2_INSTANCE_ID --instance-type t2.micro
 
-          echo "Starting instance ${{ env.EC2_INSTANCE_ID }}..."
-          aws ec2 start-instances --instance-ids ${{ env.EC2_INSTANCE_ID }}
+          echo "Starting instance $EB2_EC2_INSTANCE_ID..."
+          aws ec2 start-instances --instance-ids $EB2_EC2_INSTANCE_ID
 
           echo "Waiting for instance to be running..."
-          aws ec2 wait instance-running --instance-ids ${{ env.EC2_INSTANCE_ID }}
+          aws ec2 wait instance-running --instance-ids $EB2_EC2_INSTANCE_ID
 
           echo "Instance type changed to t2.micro and restarted successfully."
 
