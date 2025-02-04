@@ -144,7 +144,7 @@ jobs:
             sudo systemctl start nginx
             sudo systemctl enable nginx
 
-            sudo certbot --nginx -d flask-app-server-env.ap-south-1.elasticbeanstalk.com -d blog.example.com --non-interactive --agree-tos -m ${{ secrets.MAH_EMAIL }}
+            sudo certbot --nginx -d flask-app-server-env.ap-south-1.elasticbeanstalk.com -d bk.flask-app-server-env.ap-south-1.elasticbeanstalk.com --non-interactive --agree-tos -m ${{ secrets.MAH_EMAIL }}
 
             sudo systemctl restart nginx
 
@@ -169,12 +169,18 @@ jobs:
           aws ec2 modify-instance-attribute --instance-id $EB_EC2_INSTANCE_ID --instance-type t2.micro
 
           echo "Starting instance $EB_EC2_INSTANCE_ID..."
-          aws ec2 start-instances --instance-ids $EB_EC2_INSTANCE_ID
+          START_RESULT=$(aws ec2 start-instances --instance-ids $EB_EC2_INSTANCE_ID --query 'StartingInstances[0].CurrentState.Name' --output text)
+
+          if [ "$START_RESULT" != "running" ]; then
+            echo "Failed to start with t2.micro, trying t3.micro instead..."
+            aws ec2 modify-instance-attribute --instance-id $EB_EC2_INSTANCE_ID --instance-type t3.micro
+            aws ec2 start-instances --instance-ids $EB_EC2_INSTANCE_ID
+          fi
 
           echo "Waiting for instance to be running..."
           aws ec2 wait instance-running --instance-ids $EB_EC2_INSTANCE_ID
 
-          echo "Instance type changed to t2.micro and restarted successfully."
+          echo "Instance type changed and started successfully."
 
       - name: Remove SSH Access for Security
         run: |
