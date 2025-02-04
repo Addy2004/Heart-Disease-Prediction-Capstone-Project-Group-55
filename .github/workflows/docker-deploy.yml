@@ -129,7 +129,7 @@ jobs:
         run: |
           ssh -v -i ${{ env.KEY_FILE }} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ServerAliveInterval=30 -o ServerAliveCountMax=5 ec2-user@${{ env.PUBLIC_IP }} << 'EOF'
             
-            sudo fallocate -l 4G /swapfile
+            sudo fallocate -l 1G /swapfile
             sudo chmod 600 /swapfile
             sudo mkswap  /swapfile
             sudo swapon /swapfile
