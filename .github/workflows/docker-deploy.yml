@@ -125,6 +125,16 @@ jobs:
         run: |
           aws ec2 describe-security-groups --group-ids ${{ env.SECURITY_GROUP_ID }}
 
+      - name: Allocated SWAP to instance
+        run: |
+          sudo fallocate -l 4G /swapfile
+          sudo chmod 600 /swapfile
+          sudo mkswap  /swapfile
+          sudo swapon /swapfile
+          sudo swapon  --show
+          sudo free -h
+          sudo echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+
       - name: Install Certbot and Enable HTTPS
         run: |
           ssh -v -i ${{ env.KEY_FILE }} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ServerAliveInterval=30 -o ServerAliveCountMax=5 ec2-user@${{ env.PUBLIC_IP }} << 'EOF'
