@@ -86,8 +86,8 @@ jobs:
       - name: Retrieve EC2 Instance & Security Group Info
         run: |
           EB_INSTANCE_ID=$(aws ec2 describe-instances \
-            --filters "Name=tag:elasticbeanstalk:environment-name,Values=flask-app-server-env" \
-            --query "Reservations[*].Instances[?State.Name=='running'].InstanceId" \
+            --filters "Name=tag:elasticbeanstalk:environment-name,Values=flask-app-server-env" "Name=instance-state-name,Values=running" \
+            --query "Reservations[*].Instances[*].InstanceId" \
             --output text | awk '{print $1}')
 
           if [[ -z "$EB_INSTANCE_ID" ]]; then
