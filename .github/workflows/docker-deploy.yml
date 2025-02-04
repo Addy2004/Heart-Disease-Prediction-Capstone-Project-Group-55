@@ -59,13 +59,13 @@ jobs:
           done
           echo "Environment terminated successfully."
 
-      # - name: Create a new EC2 Key Pair
-      #   run: |
-      #     KEY_NAME="temp-keypair-${{ github.run_id }}"
-      #     aws ec2 create-key-pair --key-name $KEY_NAME --query 'KeyMaterial' --output text > $KEY_NAME.pem | tee $KEY_NAME.pem
-      #     chmod 400 $KEY_NAME.pem
-      #     echo "KEY_NAME=$KEY_NAME" >> $GITHUB_ENV
-      #     echo "KEY_FILE=$KEY_NAME.pem" >> $GITHUB_ENV
+      - name: Create a new EC2 Key Pair
+        run: |
+          KEY_NAME="temp-keypair-${{ github.run_id }}"
+          aws ec2 create-key-pair --key-name $KEY_NAME --query 'KeyMaterial' --output text > $KEY_NAME.pem | tee $KEY_NAME.pem
+          chmod 400 $KEY_NAME.pem
+          echo "KEY_NAME=$KEY_NAME" >> $GITHUB_ENV
+          echo "KEY_FILE=$KEY_NAME.pem" >> $GITHUB_ENV
 
       - name: Create New Elastic Beanstalk Environment with Free Tier Configuration
         run: |
@@ -73,192 +73,93 @@ jobs:
             --region ap-south-1 \
             --cname flask-app-server-env \
             --no-verify \
+            --single \
             --instance-type t2.micro \
+            --keyname ${{ env.KEY_NAME }} \
             --envvars DOCKER_IMAGE=${{ secrets.DOCKER_USERNAME }}/flask-app-server:latest
+
+      - name: Retrieve EC2 Instance & Security Group Info
+        run: |
+          EB_INSTANCE_ID=$(aws ec2 describe-instances \
+            --filters "Name=tag:elasticbeanstalk:environment-name,Values=flask-app-server-env" "Name=instance-state-name,Values=running" \
+            --query "Reservations[*].Instances[*].[InstanceId,LaunchTime]" \
+            --output text | sort -k2 | tail -n 1 | awk '{print $1}')
+
+          if [[ -z "$EB_INSTANCE_ID" ]]; then
+            echo "Error: No running EC2 instance in EB env."
+            exit 1
+          fi
+
+          echo "EC2_INSTANCE_ID:= $EB_INSTANCE_ID"
+          echo "EC2_INSTANCE_ID<<EOF" >> $GITHUB_ENV
+          echo "$EB_INSTANCE_ID" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+          SG_ID=$(aws ec2 describe-instances \
+            --instance-ids $EB_INSTANCE_ID \
+            --query "Reservations[*].Instances[*].SecurityGroups[*].GroupId" --output text | head -n 1)
+
+          echo "SECURITY_GROUP_ID:= $SG_ID"
+          echo "SECURITY_GROUP_ID=$SG_ID" >> $GITHUB_ENV
+
+          PUBLIC_IP=$(aws ec2 describe-instances \
+            --instance-ids $EB_INSTANCE_ID \
+            --query "Reservations[*].Instances[*].PublicIpAddress" --output text)
+
+          echo "PUBLIC_IP:= $PUBLIC_IP"
+          echo "PUBLIC_IP=$PUBLIC_IP" >> $GITHUB_ENV
+
+      - name: Allow Access Temporarily
+        run: |
+          RUNNER_IP=$(curl -s http://checkip.amazonaws.com)
+
+          aws ec2 authorize-security-group-ingress \
+            --group-id ${{ env.SECURITY_GROUP_ID }} \
+            --protocol tcp --port 22 --cidr ${RUNNER_IP}/32
+
+          aws ec2 authorize-security-group-ingress \
+            --group-id ${{ env.SECURITY_GROUP_ID }} \
+            --protocol tcp --port 443 --cidr 0.0.0.0/0
+
+      - name: Debug Security Group Rules
+        run: |
+          aws ec2 describe-security-groups --group-ids ${{ env.SECURITY_GROUP_ID }}
+
+      - name: Install Certbot and Enable HTTPS
+        run: |
+          ssh -v -i ${{ env.KEY_FILE }} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ServerAliveInterval=30 -o ServerAliveCountMax=5 ec2-user@${{ env.PUBLIC_IP }} << 'EOF'
+            sudo yum update -y
+            sudo yum install -y nginx
+            sudo amazon-linux-extras enable epel
+            sudo yum install -y epel-release
+            sudo yum install -y certbot python2-certbot-nginx
+
+            sudo sed -i '/http {/a \    server_names_hash_bucket_size 128;' /etc/nginx/nginx.conf
+
+            sudo systemctl start nginx
+            sudo systemctl enable nginx
+
+            sudo certbot --nginx -d flask-app-server-env.ap-south-1.elasticbeanstalk.com -d bk.flask-app-server-env.ap-south-1.elasticbeanstalk.com --non-interactive --agree-tos -m ${{ secrets.MAH_EMAIL }}
+
+            sudo systemctl restart nginx
+
+            echo "0 0, 12 * * * root /opt/certbot/bin/python -c 'import random; import time; time.sleep(random.random() * 3600)' && sudo certbot renew -q" | sudo tee -a /etc/crontab > /dev/null
+          EOF
 
       - name: Deploy Docker Image to Elastic Beanstalk
         run: |
           eb use flask-app-server-env
           eb deploy --no-verify
 
-      # - name: Retrieve EC2 Instance & Security Group Info
-      #   run: |
-      #     EB_INSTANCE_ID=$(aws ec2 describe-instances \
-      #       --filters "Name=tag:elasticbeanstalk:environment-name,Values=flask-app-server-env" "Name=instance-state-name,Values=running" \
-      #       --query "Reservations[*].Instances[*].[InstanceId,LaunchTime]" \
-      #       --output text | sort -k2 | tail -n 1 | awk '{print $1}')
-
-      #     if [[ -z "$EB_INSTANCE_ID" ]]; then
-      #       echo "Error: No running EC2 instance in EB env."
-      #       exit 1
-      #     fi
-
-      #     echo "EC2_INSTANCE_ID:= $EB_INSTANCE_ID"
-      #     echo "EC2_INSTANCE_ID<<EOF" >> $GITHUB_ENV
-      #     echo "$EB_INSTANCE_ID" >> $GITHUB_ENV
-      #     echo "EOF" >> $GITHUB_ENV
-
-      #     SG_ID=$(aws ec2 describe-instances \
-      #       --instance-ids $EB_INSTANCE_ID \
-      #       --query "Reservations[*].Instances[*].SecurityGroups[*].GroupId" --output text | head -n 1)
-
-      #     echo "SECURITY_GROUP_ID:= $SG_ID"
-      #     echo "SECURITY_GROUP_ID=$SG_ID" >> $GITHUB_ENV
-
-      #     PUBLIC_IP=$(aws ec2 describe-instances \
-      #       --instance-ids $EB_INSTANCE_ID \
-      #       --query "Reservations[*].Instances[*].PublicIpAddress" --output text)
-
-      #     echo "PUBLIC_IP:= $PUBLIC_IP"
-      #     echo "PUBLIC_IP=$PUBLIC_IP" >> $GITHUB_ENV
-
-      # - name: Allow Access Temporarily
-      #   run: |
-      #     RUNNER_IP=$(curl -s http://checkip.amazonaws.com)
-
-      #     aws ec2 authorize-security-group-ingress \
-      #       --group-id ${{ env.SECURITY_GROUP_ID }} \
-      #       --protocol tcp --port 22 --cidr ${RUNNER_IP}/32
-
-      #     aws ec2 authorize-security-group-ingress \
-      #       --group-id ${{ env.SECURITY_GROUP_ID }} \
-      #       --protocol tcp --port 443 --cidr 0.0.0.0/0
-
-      # - name: Debug Security Group Rules
-      #   run: |
-      #     aws ec2 describe-security-groups --group-ids ${{ env.SECURITY_GROUP_ID }}
-
-      # - name: Install Certbot and Enable HTTPS
-      #   run: |
-      #     ssh -v -i ${{ env.KEY_FILE }} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ServerAliveInterval=30 -o ServerAliveCountMax=5 ec2-user@${{ env.PUBLIC_IP }} << 'EOF'
-      #       sudo yum update -y
-      #       sudo yum install -y nginx
-      #       sudo amazon-linux-extras enable epel
-      #       sudo yum install -y epel-release
-      #       sudo yum install -y certbot python2-certbot-nginx
-
-      #       sudo sed -i '/http {/a \    server_names_hash_bucket_size 128;' /etc/nginx/nginx.conf
-
-      #       sudo systemctl start nginx
-      #       sudo systemctl enable nginx
-
-      #       sudo certbot --nginx -d flask-app-server-env.ap-south-1.elasticbeanstalk.com -d bk.flask-app-server-env.ap-south-1.elasticbeanstalk.com --non-interactive --agree-tos -m ${{ secrets.MAH_EMAIL }}
-
-      #       sudo systemctl restart nginx
-
-      #       echo "0 0, 12 * * * root /opt/certbot/bin/python -c 'import random; import time; time.sleep(random.random() * 3600)' && sudo certbot renew -q" | sudo tee -a /etc/crontab > /dev/null
-      #     EOF
-
-      # - name: Modify Instance Type to t2.micro After Certbot Setup
-      #   run: |
-
-      #     EB_EC2_INSTANCE_ID=$(aws ec2 describe-instances \
-      #       --filters "Name=tag:elasticbeanstalk:environment-name,Values=flask-app-server-env" "Name=instance-state-name,Values=running" \
-      #       --query "Reservations[*].Instances[*].[InstanceId,LaunchTime]" \
-      #       --output text | sort -k2 | tail -n 1 | awk '{print $1}')
-
-      #     echo "Stopping instance $EB_EC2_INSTANCE_ID..."
-      #     aws ec2 stop-instances --instance-ids $EB_EC2_INSTANCE_ID
-
-      #     echo "Waiting for instance to stop..."
-      #     aws ec2 wait instance-stopped --instance-ids $EB_EC2_INSTANCE_ID
-
-      #     echo "Modifying instance type to t2.micro..."
-      #     aws ec2 modify-instance-attribute --instance-id $EB_EC2_INSTANCE_ID --instance-type t2.micro
-
-      #     echo "Starting instance $EB_EC2_INSTANCE_ID..."
-      #     START_RESULT=$(aws ec2 start-instances --instance-ids $EB_EC2_INSTANCE_ID --query 'StartingInstances[0].CurrentState.Name' --output text)
-
-      #     if [ "$START_RESULT" != "running" ]; then
-      #       echo "Failed to start with t2.micro, trying t3.micro instead..."
-      #       aws ec2 modify-instance-attribute --instance-id $EB_EC2_INSTANCE_ID --instance-type t3.micro
-      #       aws ec2 start-instances --instance-ids $EB_EC2_INSTANCE_ID
-      #     fi
-
-      #     echo "Waiting for instance to be running..."
-      #     aws ec2 wait instance-running --instance-ids $EB_EC2_INSTANCE_ID
-
-      #     echo "Instance type changed and started successfully."
-
-      # - name: Remove SSH Access for Security
-      #   run: |
-      #     RUNNER_IP=$(curl -s http://checkip.amazonaws.com)
-
-      #     aws ec2 revoke-security-group-ingress \
-      #       --group-id ${{ env.SECURITY_GROUP_ID }} \
-      #       --protocol tcp --port 22 --cidr ${RUNNER_IP}/32
-
-      # - name: Clean up the Key Pair
-      #   run: |
-      #     aws ec2 delete-key-pair --key-name ${{ env.KEY_NAME }}
-      #     rm ${{ env.KEY_FILE }}
-
-      - name: Request SSL Certificate from AWS ACM
+      - name: Remove SSH Access for Security
         run: |
-          # Request a certificate for yout domain
-          CERT_ARN=$(aws acm request-certificate \
-            --domain-name flask-app-server-env.ap-south-1.elasticbeanstalk.com \
-            --validation-method DNS \
-            --query 'CertificateArn' \
-            --output text)
+          RUNNER_IP=$(curl -s http://checkip.amazonaws.com)
 
-          echo "Certificate ARN: $CERT_ARN"
-          echo "CERT_ARN=$CERT_ARN" >> $GITHUB_ENV
+          aws ec2 revoke-security-group-ingress \
+            --group-id ${{ env.SECURITY_GROUP_ID }} \
+            --protocol tcp --port 22 --cidr ${RUNNER_IP}/32
 
-      - name: Get Hosted Zone ID for DNS Validation
+      - name: Clean up the Key Pair
         run: |
-          HOSTED_ZONE_ID=$(aws route53 list-hosted-zones-by-name \
-            --dns-name flask-app-server-env.ap-south-1.elasticbeanstalk.com --query "HostedZones[0].Id" --output text)
-            echo "Hosted Zone ID: $HOSTED_ZONE_ID"
-            echo "HOSTED_ZONE_ID=$HOSTED_ZONE_ID" >> $GITHUB_ENV
-
-      - name: Create DNS Validation Record in Route 53
-        run: |
-          CERTIFICATE_ARN=${{ env.CERT_ARN }}
-          HOSTED_ZONE_ID=${{ env.HOSTED_ZONE_ID }}
-
-          DNS_RECORD=$(aws acm describe-certificate \
-            --certificate-arn $CERTIFICATE_ARN \
-            --query 'Certificate.DomainValidationOptions[0].ResourceRecord' \
-            --output json)
-
-          NAME=$(echo $DNS_RECORD | jq -r .Name)
-          TYPE=$(echo $DNS_RECORD | jq -r .Type)
-          VALUE=$(echo $DNS_RECORD | jq -r .Value)
-
-          aws route53 change-resource-record-sets \
-            --hosted-zone-id $HOSTED_ZONE_ID \
-            --change-batch '{
-              "Changes": [
-                {
-                  "Action": "UPSERT",
-                  "ResourceRecordSet": {
-                    "Name": "'$NAME'",
-                    "Type": "'$TYPE'",
-                    "TTL": 60,
-                    "ResourceRecords": [
-                      {
-                        "Value": "'$VALUE'"
-                      }
-                    ]
-                  }
-                }
-              ]
-            }'
-
-      - name: Waiting for the certificate to be issued and validated
-        run: |
-          echo "Waiting for the certificate to be issued..."
-          aws acm wait certificate-validated --certificate-arn ${{ env.CERT_ARN }}
-
-      - name: Attach the certificate to EB environment
-        run: |
-          aws elasticbeanstalk update-environment \
-            --region ap-south-1 \
-            --environment-name flask-app-server-env \
-            --option-settings "Namespace=aws:elb:loadbalancer,OptionName=SSLCertificateId,Value=${{ env.CERT_ARN }}"
-
-      - name: Update Environment to Use HTTPS
-        run: |
-          eb setenv HTTPS_ENABLED=true
-          eb deploy --no-verify
+          aws ec2 delete-key-pair --key-name ${{ env.KEY_NAME }}
+          rm ${{ env.KEY_FILE }}
