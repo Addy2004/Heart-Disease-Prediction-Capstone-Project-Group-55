@@ -87,7 +87,13 @@ jobs:
         run: |
           EB_INSTANCE_ID=$(aws ec2 describe-instances \
             --filters "Name=tag:elasticbeanstalk:environment-name,Values=flask-app-server-env" \
-            --query "Reservations[*].Instances[*].InstanceId" --output text | head -n 1)
+            --query "Reservations[*].Instances[?State.Name=='running'].InstanceId" \
+            --output text | awk '{print $1}')
+
+          if [[ -z "$EB_INSTANCE_ID" ]]; then
+            echo "Error: No running EC2 instance in EB env."
+            exit 1
+          fi
 
           echo "EC2_INSTANCE_ID:= $EB_INSTANCE_ID"
           echo "EC2_INSTANCE_ID<<EOF" >> $GITHUB_ENV
