@@ -139,7 +139,7 @@ const Form = ({ setIsLoading, setResponseMessage, handleResponse }) => {
 
     try {
       const response = await fetch(
-        "https://flask-app-server-env.ap-south-1.elasticbeanstalk.com/predict",
+        "https://flask-app-273534401124.asia-south1.run.app/predict",
         {
           method: "POST",
           headers: {
