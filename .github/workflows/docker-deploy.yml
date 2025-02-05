@@ -29,17 +29,25 @@ jobs:
           cd webApp
           docker push ${{ secrets.DOCKER_USERNAME }}/flask-app-server:latest
 
+      # Step to authenticate using the service account key
+      - name: Authenticate with Google Cloud
+        uses: google-github-actions/auth@v0
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      # Step to set up Google Cloud CLI
       - name: Set up Google Cloud CLI
         uses: google-github-actions/setup-gcloud@v2
         with:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
-          credentials: ${{ secrets.GCP_SA_KEY }}
 
+      # Optional: Verify authentication
       - name: Test Google Cloud CLI Authentication (optional)
         run: |
           gcloud auth list
           gcloud config list
 
+      # Deploy Docker image to Google Cloud Run
       - name: Deploy Docker Image to Google Cloud Run
         run: |
           gcloud run deploy flask-app \
