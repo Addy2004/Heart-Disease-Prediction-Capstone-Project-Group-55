@@ -46,7 +46,7 @@ def validateInput(data):
 
     return errors
 
-# Custom class structure for neural network model
+# Custom class structure for neural network model.
 @register_keras_serializable()
 class improvedModelMCDropout(Dropout):
     def call(self, inputs, training=None):
