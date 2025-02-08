@@ -1,6 +1,9 @@
-import React from "react";
+import React, { useState } from "react";
+import "./Result.css";
 import RiskBar from "./RiskBar";
 import BackButton from "./BackButton";
+import downArrow from "../assets/expand_icon.png";
+import upArrow from "../assets/collapse_icon.png";
 
 const formatModelName = (name) => {
   return name
@@ -13,7 +16,45 @@ const formatModelName = (name) => {
 };
 
 const Result = ({ success, message, errors = [], modelData, onBack }) => {
-  console.log("Errors in Result.jsx: ", errors);
+  const [expanded, setExpanded] = useState(false);
+  // console.log("Errors in Result.jsx: ", errors);
+
+  const allProbabilities = [];
+
+  if (modelData) {
+    if (modelData.neuralNetwork) {
+      allProbabilities.push(modelData.neuralNetwork.probability[0]);
+    }
+    ["nontree", "tree"].forEach((modelType) => {
+      if (modelData[modelType]) {
+        Object.values(modelData[modelType]).forEach((model) => {
+          if (model.probability) {
+            allProbabilities.push(model.probability[1]);
+          } else {
+            Object.values(model).forEach((svmModel) => {
+              if (svmModel.probability) {
+                allProbabilities.push(svmModel.probability[1]);
+              }
+            });
+          }
+        });
+      }
+    });
+  }
+
+  const averageProbability =
+    allProbabilities.length > 0
+      ? allProbabilities.reduce((sum, prob) => sum + prob, 0) /
+        allProbabilities.length
+      : 0;
+
+  const riskLevel =
+    averageProbability < 0.33
+      ? "LOW"
+      : averageProbability < 0.66
+      ? "MODERATE"
+      : "HIGH";
+
   return (
     <div
       className={`
@@ -50,42 +91,74 @@ const Result = ({ success, message, errors = [], modelData, onBack }) => {
 
       {/* If there are no error, show model results */}
       {success && modelData && Object.keys(modelData).length > 0 && (
-        <div className="mt-6 space-y-6">
-          {modelData.neuralNetwork && (
-            <RiskBar
-              label="Neural Network"
-              probability={modelData.neuralNetwork.probability[0]}
+        <div className="mt-6 space-y-2">
+          {/* Average Probability RiskBar */}
+          <RiskBar
+            label={`Overall Risk: ${riskLevel}`}
+            probability={averageProbability}
+          />
+
+          {/* Expand/Collapse Button */}
+          <button
+            className="text-lg font-semibold transition-transform"
+            onClick={() => setExpanded(!expanded)}
+            style={{
+              backgroundColor: "transparent",
+              border: "none",
+              outline: "none",
+              boxShadow: "none",
+              padding: "0",
+            }}
+          >
+            <img
+              src={expanded ? upArrow : downArrow}
+              alt={expanded ? "Collapse" : "Expand"}
+              className="w-10 h-8 expand-icon"
             />
-          )}
-          {["nontree", "tree"].map((modelType) =>
-            modelData[modelType]
-              ? Object.entries(modelData[modelType]).map(
-                  ([modelName, model]) => {
-                    if (modelName === "svm") {
-                      // Special handling for SVM Models inside nontree.svm
-                      return Object.entries(model).map(
-                        ([svmName, svmModel]) => (
-                          <RiskBar
-                            key={svmName}
-                            label={formatModelName(svmName)}
-                            probability={svmModel.probability[1]}
-                          />
-                        )
+          </button>
+
+          {/* Individual Model Risk Bars (shown when expanded) */}
+          <div
+            className={`
+              expand-enter ${expanded ? "expand-enter-active" : ""}
+            `}
+          >
+            {modelData.neuralNetwork && (
+              <RiskBar
+                label="Neural Network"
+                probability={modelData.neuralNetwork.probability[0]}
+              />
+            )}
+            {["nontree", "tree"].map((modelType) =>
+              modelData[modelType]
+                ? Object.entries(modelData[modelType]).map(
+                    ([modelName, model]) => {
+                      if (modelName === "svm") {
+                        // Special handling for SVM Models inside nontree.svm
+                        return Object.entries(model).map(
+                          ([svmName, svmModel]) => (
+                            <RiskBar
+                              key={svmName}
+                              label={formatModelName(svmName)}
+                              probability={svmModel.probability[1]}
+                            />
+                          )
+                        );
+                      }
+
+                      // Other remaining models
+                      return (
+                        <RiskBar
+                          key={modelName}
+                          label={formatModelName(modelName)}
+                          probability={model.probability[1]}
+                        />
                       );
                     }
-
-                    // Other remaining models
-                    return (
-                      <RiskBar
-                        key={modelName}
-                        label={formatModelName(modelName)}
-                        probability={model.probability[1]}
-                      />
-                    );
-                  }
-                )
-              : null
-          )}
+                  )
+                : null
+            )}
+          </div>
         </div>
       )}
 

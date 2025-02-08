@@ -21,7 +21,7 @@ const BackButton = ({ onClick }) => {
 
   return (
     <button
-      className="w-full py-2 mt-8 mx-auto"
+      className="w-full py-2 mt-2 mx-auto"
       style={backButtonStyles}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}

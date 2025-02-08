@@ -1,0 +1,18 @@
+.expand-enter {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: max-height 0.5s ease-in-out, opacity 0.5s ease-in-out;
+}
+.expand-enter-active {
+  max-height: 5000px;
+  opacity: 1;
+}
+
+.expand-icon {
+  transition: transform 0.2s ease-in-out;
+}
+
+.expand-icon:hover {
+  transform: scale(1.3);
+}
