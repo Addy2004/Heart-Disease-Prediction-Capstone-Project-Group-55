@@ -39,7 +39,6 @@ const App = () => {
       <h1 className="text-2xl text-[#ebe778] font-semibold text-center my-6">
         Heart Disease Predictor
       </h1>
-      <p>IN DEVELOPMENT</p>
 
       {isLoading ? (
         <LoadingSpinner />
