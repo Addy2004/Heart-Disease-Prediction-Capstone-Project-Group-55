@@ -88,6 +88,7 @@ try:
     # Preprocessors
     df_nontree_temp = load_model('model/dfNontree.pkl')
     scaler = load_model('model/MinMaxScaler.pkl')
+    encoders = load_model('model/label_encoders.pkl')
 
     df_tree_temp = load_model('model/dfTree.pkl')
 
@@ -165,15 +166,19 @@ def predictionsJSONResponse(input):
                     }
 
             elif(model[0] == "tree"):
-                # Tree model preprocessing
-                df_tree = df.apply(LabelEncoder().fit_transform)
+                df_test = pd.DataFrame([input])
 
+                for col, encoder in encoders.items():
+                    df_test[col] = encoder.transform(df_test[col])
+                
                 features_col_tree = df_tree_temp.columns.to_list()
                 features_col_tree.remove(target)
 
+                df_test = df_test[features_col_tree]
+
                 # Prediction
-                prediction = int(model[1].predict(df_tree)[0])
-                probability = model[1].predict_proba(df_tree).tolist()[0]
+                prediction = int(model[1].predict(df_test)[0])
+                probability = model[1].predict_proba(df_test).tolist()[0]
 
                 response["models"]["tree"][model_name] = {
                     "prediction" : int(prediction),
